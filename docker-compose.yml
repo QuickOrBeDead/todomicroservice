@@ -1,0 +1,38 @@
+version: '3.4'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: always
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  postgres:
+    image: postgres:14.2-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=taskdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+    volumes: 
+      - postgres:/var/lib/postgresql/data
+
+  taskmanagementapi:
+    image: ${DOCKER_REGISTRY-}taskmanagementapi
+    restart: always
+    ports:
+      - "8081:80"
+    depends_on:
+      - rabbitmq
+      - postgres
+    build:
+      context: .
+      dockerfile: TaskManagementApi/Dockerfile
+
+      
+volumes:
+  postgres:
+    driver: local
