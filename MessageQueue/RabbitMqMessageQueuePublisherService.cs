@@ -60,7 +60,16 @@
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.ExchangeDeclare(_exchange, "fanout", true, false, null);
+                channel.ExchangeDeclare("unrouted", "fanout", true, false, null);
+                channel.QueueDeclare("unrouted", true, false, false, null);
+                channel.QueueBind("unrouted", "unrouted", string.Empty);
+
+                channel.ExchangeDeclare(
+                    _exchange,
+                    "fanout",
+                    true,
+                    false,
+                    new Dictionary<string, object> { { "alternate-exchange", "unrouted" } });
                 channel.BasicPublish(
                     _exchange,
                     string.Empty,
