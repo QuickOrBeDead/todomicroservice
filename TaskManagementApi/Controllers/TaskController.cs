@@ -1,5 +1,7 @@
 namespace TaskManagementApi.Controllers
 {
+    using MessageQueue;
+
     using Microsoft.AspNetCore.Mvc;
 
     using TaskManagementApi.Infrastructure;
@@ -10,9 +12,12 @@ namespace TaskManagementApi.Controllers
     {
         private readonly TaskDbContext _taskDbContext;
 
-        public TaskController(TaskDbContext taskDbContext)
+        private readonly IMessageQueueService _messageQueueService;
+
+        public TaskController(TaskDbContext taskDbContext, IMessageQueueService messageQueueService)
         {
             _taskDbContext = taskDbContext;
+            _messageQueueService = messageQueueService;
         }
 
         [HttpGet(Name = "GetTasks")]
@@ -24,8 +29,12 @@ namespace TaskManagementApi.Controllers
         [HttpPost(Name = "AddTask")]
         public async Task Add(string title)
         {
-            await _taskDbContext.Tasks.AddAsync(new TaskEntity { Title = title }).ConfigureAwait(false);
+            var taskEntity = new TaskEntity { Title = title };
+
+            await _taskDbContext.Tasks.AddAsync(taskEntity).ConfigureAwait(false);
             await _taskDbContext.SaveChangesAsync().ConfigureAwait(false);
+
+            _messageQueueService.PublishMessage(taskEntity);
         }
     }
 }
