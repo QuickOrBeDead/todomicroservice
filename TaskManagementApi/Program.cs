@@ -7,7 +7,7 @@ using TaskManagementApi.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddSingleton<IMessageQueueService>(x => new RabbitMqMessageQueuePublisherService("rabbitmq", "guest", "guest", "Todo"));
+builder.Services.AddSingleton<IMessageQueuePublisherService>(x => new RabbitMqMessageQueuePublisherService("rabbitmq", "guest", "guest", "Todo"));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -12,12 +12,12 @@ namespace TaskManagementApi.Controllers
     {
         private readonly TaskDbContext _taskDbContext;
 
-        private readonly IMessageQueueService _messageQueueService;
+        private readonly IMessageQueuePublisherService _messageQueuePublisherService;
 
-        public TaskController(TaskDbContext taskDbContext, IMessageQueueService messageQueueService)
+        public TaskController(TaskDbContext taskDbContext, IMessageQueuePublisherService messageQueuePublisherService)
         {
             _taskDbContext = taskDbContext;
-            _messageQueueService = messageQueueService;
+            _messageQueuePublisherService = messageQueuePublisherService;
         }
 
         [HttpGet(Name = "GetTasks")]
@@ -34,7 +34,7 @@ namespace TaskManagementApi.Controllers
             await _taskDbContext.Tasks.AddAsync(taskEntity).ConfigureAwait(false);
             await _taskDbContext.SaveChangesAsync().ConfigureAwait(false);
 
-            _messageQueueService.PublishMessage(taskEntity);
+            _messageQueuePublisherService.PublishMessage(taskEntity);
         }
     }
 }
