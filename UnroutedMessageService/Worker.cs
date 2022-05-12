@@ -22,8 +22,8 @@ namespace UnroutedMessageService
             {
                 _messageQueueConsumerService.ConsumeMessage(m =>
                         {
-                            _messageQueuePublisherService.Publish(m);
                             Thread.Sleep(10_000);
+                            _messageQueuePublisherService.Publish(m);
                         });
             }
 

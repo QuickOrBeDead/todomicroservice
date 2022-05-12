@@ -107,6 +107,7 @@
 
                             _channel.BasicAck(e.DeliveryTag, false);
                         };
+                        _channel.BasicQos(0, 1, false);
                         _consumerTag = _channel.BasicConsume(_queue, false, consumer);
                     });
         }
