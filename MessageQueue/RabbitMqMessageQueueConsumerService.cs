@@ -3,6 +3,8 @@
     using System.Text;
     using System.Text.Json;
 
+    using Polly;
+
     using RabbitMQ.Client;
     using RabbitMQ.Client.Events;
 
@@ -28,6 +30,8 @@
         private IConnection? _connection;
 
         private IModel? _channel;
+
+        private string _consumerTag;
 
         public RabbitMqMessageQueueConsumerService(string host, string userName, string password, string exchange, string queue)
         {
@@ -70,25 +74,33 @@
                 throw new ArgumentNullException(nameof(consumeAction));
             }
 
-            // TODO: reconnect ??
-            var factory = new ConnectionFactory { HostName = _host, UserName = _userName, Password = _password };
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
+            Policy
+                .Handle<Exception>()
+                .WaitAndRetry(10, r => TimeSpan.FromSeconds(5))
+                .Execute(
+                    () =>
+                        {
+                            var factory = new ConnectionFactory { HostName = _host, UserName = _userName, Password = _password };
+                            _connection = factory.CreateConnection();
+                            _channel = _connection.CreateModel();
 
-            _channel.ExchangeDeclare(_exchange, "fanout", true, false, null);
-            _channel.QueueDeclare(_queue, true, false, false, null);
-            _channel.QueueBind(_queue, _exchange, string.Empty);
+                            _channel.ExchangeDeclare(_exchange, "fanout", true, false, null);
+                            _channel.QueueDeclare(_queue, true, false, false, null);
+                            _channel.QueueBind(_queue, _exchange, string.Empty);
 
-            var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (_, e) =>
-            {
-                var model = JsonSerializer.Deserialize<TModel>(Encoding.UTF8.GetString(e.Body.Span));
-                if (model != null)
-                {
-                    consumeAction(model);
-                }
-            };
-            _channel.BasicConsume(_queue, true, consumer);
+                            var consumer = new EventingBasicConsumer(_channel);
+                            consumer.Received += (_, e) =>
+                                {
+                                    var model = JsonSerializer.Deserialize<TModel>(Encoding.UTF8.GetString(e.Body.Span));
+                                    if (model != null)
+                                    {
+                                        consumeAction(model);
+                                    }
+
+                                    _channel.BasicAck(e.DeliveryTag, false);
+                                };
+                            _consumerTag = _channel.BasicConsume(_queue, false, consumer);
+                        });
         }
 
         protected virtual void Dispose(bool disposing)
@@ -100,6 +112,9 @@
                     // dispose managed state (managed objects)
                 }
 
+                _channel?.BasicCancel(_consumerTag);
+                _channel?.Close(200, "Goodbye");
+                _connection?.Close();
                 _channel?.Dispose();
                 _connection?.Dispose();
                 _disposed = true;
