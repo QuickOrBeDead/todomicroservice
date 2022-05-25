@@ -39,6 +39,18 @@ services:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
 
+  mongodb:
+    image: mongo:5.0.8
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_DATABASE=auditlog
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=Password1
+    volumes:
+      - mongodb:/data/db
+      - mongodbconfig:/data/configdb
+
   unroutedmessageservice:
     image: ${DOCKER_REGISTRY-}unroutedmessageservice
     restart: always
@@ -72,6 +84,24 @@ services:
       context: .
       dockerfile: SearchApi/Dockerfile
 
+  auditlogworkerservice:
+    image: ${DOCKER_REGISTRY-}auditlogworkerservice
+    restart: always
+    depends_on:
+      - rabbitmq
+    build:
+      context: .
+      dockerfile: AuditLogWorkerService/Dockerfile
+
+  auditlogapi:
+    image: ${DOCKER_REGISTRY-}auditlogapi
+    restart: always
+    depends_on:
+      - mongodb
+    build:
+      context: .
+      dockerfile: AuditLogApi/Dockerfile
+
 volumes:
   postgres:
     driver: local
@@ -79,3 +109,9 @@ volumes:
     driver: local
   elasticsearch:
     driver: local
+  mondgodb:
+    driver: local
+  mongodbconfig:
+    driver: local
+
+

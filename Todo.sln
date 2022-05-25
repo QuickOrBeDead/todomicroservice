@@ -9,9 +9,13 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessageQueue", "MessageQueue\MessageQueue.csproj", "{C9527EB1-CAC6-4B98-B8EE-6C239F271CFA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnroutedMessageService", "UnroutedMessageService\UnroutedMessageService.csproj", "{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnroutedMessageService", "UnroutedMessageService\UnroutedMessageService.csproj", "{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchApi", "SearchApi\SearchApi.csproj", "{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SearchApi", "SearchApi\SearchApi.csproj", "{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuditLogApi", "AuditLogApi\AuditLogApi.csproj", "{D94021EF-10D4-46E6-981D-F13BCA3A0C26}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuditLogWorkerService", "AuditLogWorkerService\AuditLogWorkerService.csproj", "{8498887F-D05F-495A-B498-12267A4980BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,14 @@ Global
 		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D94021EF-10D4-46E6-981D-F13BCA3A0C26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D94021EF-10D4-46E6-981D-F13BCA3A0C26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D94021EF-10D4-46E6-981D-F13BCA3A0C26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D94021EF-10D4-46E6-981D-F13BCA3A0C26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8498887F-D05F-495A-B498-12267A4980BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8498887F-D05F-495A-B498-12267A4980BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8498887F-D05F-495A-B498-12267A4980BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8498887F-D05F-495A-B498-12267A4980BA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
