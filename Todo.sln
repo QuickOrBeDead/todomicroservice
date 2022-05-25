@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessageQueue", "MessageQueu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnroutedMessageService", "UnroutedMessageService\UnroutedMessageService.csproj", "{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchApi", "SearchApi\SearchApi.csproj", "{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
