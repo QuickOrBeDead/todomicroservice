@@ -40,39 +40,44 @@
 
         private string? _consumerTag;
 
-        public RabbitMqMessageQueueConsumerService(string host, string userName, string password, string exchange, string queue, bool declareQueue = true)
+        public RabbitMqMessageQueueConsumerService(RabbitMqSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(userName))
+            if (settings == null)
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(userName));
+                throw new ArgumentNullException(nameof(settings));
             }
 
-            if (string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(settings.UserName))
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(password));
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.UserName));
             }
 
-            if (string.IsNullOrWhiteSpace(exchange))
+            if (string.IsNullOrWhiteSpace(settings.Password))
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(exchange));
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Password));
             }
 
-            if (string.IsNullOrWhiteSpace(queue))
+            if (string.IsNullOrWhiteSpace(settings.Exchange))
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(queue));
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Exchange));
             }
 
-            if (string.IsNullOrWhiteSpace(host))
+            if (string.IsNullOrWhiteSpace(settings.Queue))
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(host));
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Queue));
             }
 
-            _host = host;
-            _userName = userName;
-            _password = password;
-            _exchange = exchange;
-            _queue = queue;
-            _declareQueue = declareQueue;
+            if (string.IsNullOrWhiteSpace(settings.Host))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Host));
+            }
+
+            _host = settings.Host;
+            _userName = settings.UserName;
+            _password = settings.Password;
+            _exchange = settings.Exchange;
+            _queue = settings.Queue;
+            _declareQueue = settings.DeclareQueue;
         }
 
         public void ConsumeMessage(Action<ReadOnlyMemory<byte>> consumeAction)
@@ -145,8 +150,8 @@
 
     public class RabbitMqMessageQueueGenericConsumerService<TModel> : RabbitMqMessageQueueConsumerService, IMessageQueueConsumerService<TModel>
     {
-        public RabbitMqMessageQueueGenericConsumerService(string host, string userName, string password, string exchange, string queue, bool declareQueue = true) 
-            : base(host, userName, password, exchange, queue, declareQueue)
+        public RabbitMqMessageQueueGenericConsumerService(RabbitMqSettings settings) 
+            : base(settings)
         {
         }
 

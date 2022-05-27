@@ -2,11 +2,12 @@ using MessageQueue;
 
 using UnroutedMessageService;
 
-IHost host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
+var host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices((context, services) =>
     {
-        services.AddSingleton<IMessageQueuePublisherService>(x => new RabbitMqMessageQueuePublisherService("rabbitmq", "guest", "guest", "Todo"));
-        services.AddSingleton<IMessageQueueConsumerService>(x => new RabbitMqMessageQueueConsumerService("rabbitmq", "guest", "guest", "Todo", "unrouted", false));
+        services.AddSingleton(context.Configuration.GetSection("RabbitMq").Get<RabbitMqSettings>());
+        services.AddSingleton<IMessageQueuePublisherService, RabbitMqMessageQueuePublisherService>();
+        services.AddSingleton<IMessageQueueConsumerService, RabbitMqMessageQueueConsumerService>();
 
         services.AddHostedService<Worker>();
     })

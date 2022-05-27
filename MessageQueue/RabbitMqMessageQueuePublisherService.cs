@@ -31,32 +31,42 @@
 
         private bool _disposed;
 
-        public RabbitMqMessageQueuePublisherService(string host, string userName, string password, string exchange)
+        public RabbitMqMessageQueuePublisherService(RabbitMqSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(userName))
+            if (settings == null)
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(userName));
+                throw new ArgumentNullException(nameof(settings));
             }
 
-            if (string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(settings.UserName))
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(password));
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.UserName));
             }
 
-            if (string.IsNullOrWhiteSpace(exchange))
+            if (string.IsNullOrWhiteSpace(settings.Password))
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(exchange));
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Password));
             }
 
-            if (string.IsNullOrWhiteSpace(host))
+            if (string.IsNullOrWhiteSpace(settings.Exchange))
             {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(host));
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Exchange));
             }
 
-            _host = host;
-            _userName = userName;
-            _password = password;
-            _exchange = exchange;
+            if (string.IsNullOrWhiteSpace(settings.Queue))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Queue));
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.Host))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Host));
+            }
+
+            _host = settings.Host;
+            _userName = settings.UserName;
+            _password = settings.Password;
+            _exchange = settings.Exchange;
 
             Connect();
         }
