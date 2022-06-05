@@ -1,21 +1,41 @@
 namespace AuditLogWorkerService
 {
+    using System.Text;
+
+    using AuditLogWorkerService.Infrastructure.Data;
+
+    using MessageQueue;
+
+    using MongoDB.Bson;
+    using MongoDB.Bson.Serialization;
+    using MongoDB.Driver;
+
     public class Worker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly IMessageQueueConsumerService _messageQueueConsumerService;
 
-        public Worker(ILogger<Worker> logger)
+        private readonly IRepository _repository;
+
+        public Worker(IMessageQueueConsumerService messageQueueConsumerService, IRepository repository)
         {
-            _logger = logger;
+            _messageQueueConsumerService = messageQueueConsumerService ?? throw new ArgumentNullException(nameof(messageQueueConsumerService));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            if (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(1000, stoppingToken);
+                _messageQueueConsumerService.ConsumeMessage(
+                    (m, t) =>
+                        {
+                            var message = Encoding.UTF8.GetString(m.Span);
+                            
+                            _repository.Insert(t, BsonSerializer.Deserialize<BsonDocument>(message), cancellationToken: stoppingToken);
+                        });
             }
+
+            return Task.CompletedTask;
         }
     }
 }
