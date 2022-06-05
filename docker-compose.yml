@@ -109,7 +109,7 @@ volumes:
     driver: local
   elasticsearch:
     driver: local
-  mondgodb:
+  mongodb:
     driver: local
   mongodbconfig:
     driver: local

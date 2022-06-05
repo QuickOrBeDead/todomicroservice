@@ -13,9 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnroutedMessageService", "U
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SearchApi", "SearchApi\SearchApi.csproj", "{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuditLogApi", "AuditLogApi\AuditLogApi.csproj", "{D94021EF-10D4-46E6-981D-F13BCA3A0C26}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuditLogApi", "AuditLogApi\AuditLogApi.csproj", "{D94021EF-10D4-46E6-981D-F13BCA3A0C26}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuditLogWorkerService", "AuditLogWorkerService\AuditLogWorkerService.csproj", "{8498887F-D05F-495A-B498-12267A4980BA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuditLogWorkerService", "AuditLogWorkerService\AuditLogWorkerService.csproj", "{8498887F-D05F-495A-B498-12267A4980BA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".docker", ".docker", "{C0996D49-F3A8-4B25-AC6F-1DF6672CC94E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{245BB7AC-FFBB-4F9F-9859-D4467C2A6202}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,6 +58,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{28607C7D-4B96-4C11-8018-24383BA1D7F3} = {C0996D49-F3A8-4B25-AC6F-1DF6672CC94E}
+		{C9527EB1-CAC6-4B98-B8EE-6C239F271CFA} = {245BB7AC-FFBB-4F9F-9859-D4467C2A6202}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AE4F6594-8F01-4F94-B0B5-792B572C5D87}
