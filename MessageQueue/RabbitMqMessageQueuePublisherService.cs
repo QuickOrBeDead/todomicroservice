@@ -12,7 +12,7 @@
     {
         void PublishMessage<TModel>([DisallowNull] TModel model);
 
-        void Publish(ReadOnlyMemory<byte> body);
+        void Publish(ReadOnlyMemory<byte> body, string messageType = "Text");
     }
 
     public class RabbitMqMessageQueuePublisherService : IMessageQueuePublisherService
@@ -78,15 +78,18 @@
                 throw new ArgumentNullException(nameof(model));
             }
 
-            Publish(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(model)));
+            Publish(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(model)), typeof(TModel).Name);
         }
 
-        public void Publish(ReadOnlyMemory<byte> body)
+        public void Publish(ReadOnlyMemory<byte> body, string messageType = "Text")
         {
             if (_channel == null)
             {
                 throw new InvalidOperationException("Channel cannot be null.");
             }
+
+            IBasicProperties properties = _channel.CreateBasicProperties();
+            properties.Headers = new Dictionary<string, object> { { "MessageType", messageType } };
 
             _channel.BasicPublish(
                 _exchange,

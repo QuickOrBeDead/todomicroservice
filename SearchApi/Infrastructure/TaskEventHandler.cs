@@ -28,7 +28,7 @@
                     x => x.Map<Model.Task>(m => m.AutoMap()));
 
                 _messageQueueConsumerService.ConsumeMessage(
-                    m =>
+                    (m, _) =>
                         {
                             _logger.LogInformation($"Consuming task {m.Id}");
 

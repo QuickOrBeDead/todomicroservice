@@ -10,13 +10,17 @@
 
     public interface IMessageQueueConsumerService : IDisposable
     {
-        void ConsumeMessage(Action<ReadOnlyMemory<byte>> consumeAction);
+        void ConsumeMessage(ConsumeAction consumeAction);
     }
 
     public interface IMessageQueueConsumerService<out TModel> : IMessageQueueConsumerService
     {
-        void ConsumeMessage(Action<TModel> consumeAction);
+        void ConsumeMessage(ConsumeMessageAction<TModel> consumeAction);
     }
+
+    public delegate void ConsumeAction(ReadOnlyMemory<byte> messageBytes, string messageType);
+
+    public delegate void ConsumeMessageAction<in TModel>(TModel model, string messageType);
 
     public class RabbitMqMessageQueueConsumerService : IMessageQueueConsumerService
     {
@@ -80,7 +84,7 @@
             _declareQueue = settings.DeclareQueue;
         }
 
-        public void ConsumeMessage(Action<ReadOnlyMemory<byte>> consumeAction)
+        public void ConsumeMessage(ConsumeAction consumeAction)
         {
             if (consumeAction == null)
             {
@@ -107,10 +111,20 @@
 
                         var consumer = new EventingBasicConsumer(_channel);
                         consumer.Received += (_, e) =>
-                        {
-                            consumeAction(e.Body);
+                            {
+                                string messageType;
+                                if (e.BasicProperties.Headers.TryGetValue("MessageType", out var messageTypeObject) && messageTypeObject is byte[] messageTypeBytes)
+                                {
+                                    messageType = Encoding.UTF8.GetString(messageTypeBytes);
+                                }
+                                else
+                                {
+                                    messageType = "None";
+                                }
+                              
+                                consumeAction(e.Body, messageType);
 
-                            _channel.BasicAck(e.DeliveryTag, false);
+                                _channel.BasicAck(e.DeliveryTag, false);
                         };
                         _channel.BasicQos(0, 1, false);
                         _consumerTag = _channel.BasicConsume(_queue, false, consumer);
@@ -155,7 +169,7 @@
         {
         }
 
-        public void ConsumeMessage(Action<TModel> consumeAction)
+        public void ConsumeMessage(ConsumeMessageAction<TModel> consumeAction)
         {
             if (consumeAction == null)
             {
@@ -163,12 +177,12 @@
             }
 
             ConsumeMessage(
-                m =>
+                (m, t) =>
                     {
                         var model = JsonSerializer.Deserialize<TModel>(Encoding.UTF8.GetString(m.Span));
                         if (model != null)
                         {
-                            consumeAction(model);
+                            consumeAction(model, t);
                         }
                     });
         }

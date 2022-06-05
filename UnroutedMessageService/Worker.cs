@@ -20,10 +20,10 @@ namespace UnroutedMessageService
 
             if (!stoppingToken.IsCancellationRequested)
             {
-                _messageQueueConsumerService.ConsumeMessage(m =>
+                _messageQueueConsumerService.ConsumeMessage((m, t) =>
                         {
                             Thread.Sleep(10_000);
-                            _messageQueuePublisherService.Publish(m);
+                            _messageQueuePublisherService.Publish(m, t);
                         });
             }
 
