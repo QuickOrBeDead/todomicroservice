@@ -51,6 +51,17 @@ services:
       - mongodb:/data/db
       - mongodbconfig:/data/configdb
 
+  mongoclient:
+      image: mongoclient/mongoclient:latest
+      environment:
+        - MONGO_URL=mongodb://admin:Password1@mongodb:27017
+        - INSTALL_MONGO=false
+        - MONGOCLIENT_DEFAULT_CONNECTION_URL=mongodb://admin:Password1@mongodb:27017
+      depends_on:
+        - mongodb
+      ports:
+        - 3000:3000
+
   unroutedmessageservice:
     image: ${DOCKER_REGISTRY-}unroutedmessageservice
     restart: always
