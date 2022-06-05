@@ -38,7 +38,7 @@
                             {
                                 indexResponse = _elasticClient.IndexDocument(m);
                             }
-                            catch (System.Exception e)
+                            catch (Exception e)
                             {
                                  _logger.LogError(e, $"Index document error for task {m.Id}");
                                 throw;
@@ -49,18 +49,10 @@
                                 var errorMessage = $"{m.Id} task could not be indexed";
                                 if (indexResponse.OriginalException != null)
                                 {
-                                    var ex1 = new InvalidOperationException(errorMessage, indexResponse.OriginalException);
-
-                                    _logger.LogError(ex1, errorMessage);
-
-                                    throw ex1;
+                                    LogAndThrowException(new InvalidOperationException(errorMessage, indexResponse.OriginalException));
                                 }
 
-                                var ex = new InvalidOperationException(errorMessage);
-
-                                 _logger.LogError(ex, errorMessage);
-
-                                throw ex;
+                                LogAndThrowException(new InvalidOperationException(errorMessage));
                             }
 
                             _logger.LogInformation($"Index response for task {m.Id}: Result={indexResponse.Result}, Index={indexResponse.Index}");
@@ -68,6 +60,13 @@
             }
 
             return Task.CompletedTask;
+        }
+
+        private void LogAndThrowException(Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+
+            throw ex;
         }
     }
 }
