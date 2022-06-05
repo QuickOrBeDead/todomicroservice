@@ -88,13 +88,13 @@
                 throw new InvalidOperationException("Channel cannot be null.");
             }
 
-            IBasicProperties properties = _channel.CreateBasicProperties();
+            var properties = _channel.CreateBasicProperties();
             properties.Headers = new Dictionary<string, object> { { "MessageType", messageType } };
 
             _channel.BasicPublish(
                 _exchange,
                 string.Empty,
-                null,
+                properties,
                 body);
         }
 

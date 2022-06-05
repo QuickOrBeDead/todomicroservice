@@ -112,23 +112,29 @@
                         var consumer = new EventingBasicConsumer(_channel);
                         consumer.Received += (_, e) =>
                             {
-                                string messageType;
-                                if (e.BasicProperties.Headers.TryGetValue("MessageType", out var messageTypeObject) && messageTypeObject is byte[] messageTypeBytes)
-                                {
-                                    messageType = Encoding.UTF8.GetString(messageTypeBytes);
-                                }
-                                else
-                                {
-                                    messageType = "None";
-                                }
-                              
-                                consumeAction(e.Body, messageType);
+                                consumeAction(e.Body, GetMessageType(e));
 
                                 _channel.BasicAck(e.DeliveryTag, false);
-                        };
+                            };
                         _channel.BasicQos(0, 1, false);
                         _consumerTag = _channel.BasicConsume(_queue, false, consumer);
                     });
+        }
+
+        private static string GetMessageType(BasicDeliverEventArgs e)
+        {
+            string messageType;
+            if (e.BasicProperties.Headers.TryGetValue("MessageType", out var messageTypeObject)
+                && messageTypeObject is byte[] messageTypeBytes)
+            {
+                messageType = Encoding.UTF8.GetString(messageTypeBytes);
+            }
+            else
+            {
+                messageType = "None";
+            }
+
+            return messageType;
         }
 
         protected virtual void Dispose(bool disposing)
