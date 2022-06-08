@@ -113,6 +113,15 @@ services:
       context: .
       dockerfile: AuditLogApi/Dockerfile
 
+  webapp:
+    image: ${DOCKER_REGISTRY-}webapp
+    restart: always
+    ports:
+      - "8083:80"
+    build:
+      context: .
+      dockerfile: TodoWebApp/Dockerfile
+
 volumes:
   postgres:
     driver: local
