@@ -1,6 +1,7 @@
 using MessageQueue;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 using TaskManagementApi.Infrastructure;
 
@@ -31,7 +32,24 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    app.UseSwagger(config =>
+        {
+            config.PreSerializeFilters.Add((document, request) =>
+                {
+                    var externalPath = !request.Headers.ContainsKey("x-envoy-original-path") ? string.Empty :
+                                           request.Headers["x-envoy-original-path"].First().Replace("swagger/v1/swagger.json", string.Empty);
+                    if (!string.IsNullOrWhiteSpace(externalPath))
+                    {
+                        var newPaths = new OpenApiPaths();
+                        foreach (var path in document.Paths)
+                        {
+                            newPaths[$"{externalPath.TrimEnd('/')}{path.Key}"] = path.Value;
+                        }
+
+                        document.Paths = newPaths;
+                    }
+                });
+        });
     app.UseSwaggerUI();
 }
 
@@ -49,6 +67,5 @@ using (var serviceScope = app.Services
         context.Database.Migrate();
     }
 }
-
 
 app.Run();
