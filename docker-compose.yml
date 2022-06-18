@@ -1,6 +1,15 @@
 version: '3.4'
 
 services:
+  envoygateway:
+    image: envoyproxy/envoy:v1.21.4
+    restart: always
+    ports:
+      - "9901:9901"
+      - "10000:10000"
+    volumes:
+      - ./Envoy/envoy.yaml:/etc/envoy/envoy.yaml
+
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
@@ -133,5 +142,4 @@ volumes:
     driver: local
   mongodbconfig:
     driver: local
-
 

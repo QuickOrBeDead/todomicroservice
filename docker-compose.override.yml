@@ -5,18 +5,17 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "81"
+      - "80"
 
   searchapi:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "82"
-
+      - "81"
 
   auditlogapi:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "80"
+      - "82"
 
