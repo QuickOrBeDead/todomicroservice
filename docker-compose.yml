@@ -116,6 +116,8 @@ services:
   auditlogapi:
     image: ${DOCKER_REGISTRY-}auditlogapi
     restart: always
+    ports:
+      - "8083:80"
     depends_on:
       - mongodb
     build:
@@ -126,7 +128,7 @@ services:
     image: ${DOCKER_REGISTRY-}webapp
     restart: always
     ports:
-      - "8083:80"
+      - "8084:80"
     build:
       context: .
       dockerfile: TodoWebApp/Dockerfile
