@@ -7,7 +7,7 @@ using MessageQueue.Events;
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
-        services.AddSingleton<IRabbitMqConnection>(_ => new DefaultRabbitMqConnection(context.Configuration.GetSection("RabbitMq").Get<RabbitMqConnectionSettings>()));
+        services.AddSingleton<IRabbitMqConnection>(_ => new DefaultRabbitMqConnection(context.Configuration.GetSection("RabbitMqConnection").Get<RabbitMqConnectionSettings>()));
         services.AddSingleton<IMessageQueueConsumerService<EventBase>>(x => new RabbitMqMessageQueueConsumerService<EventBase>(x.GetRequiredService<IRabbitMqConnection>(), "taskmanagement.task.added"));
 
         services.AddSingleton(context.Configuration.GetSection("MongoDb").Get<MongoDbSettings>());

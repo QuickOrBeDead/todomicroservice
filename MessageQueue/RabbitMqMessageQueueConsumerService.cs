@@ -29,16 +29,24 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumer
 
     private string? _consumerTag;
 
-    public RabbitMqMessageQueueConsumerService(IRabbitMqConnection connection, string queueName)
+    private readonly bool _singleActiveConsumer;
+
+    public RabbitMqMessageQueueConsumerService(IRabbitMqConnection connection, RabbitMqConsumerSettings settings)
     {
-        if (string.IsNullOrWhiteSpace(queueName))
+        if (settings == null)
         {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(queueName));
+            throw new ArgumentNullException(nameof(settings));
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.Queue))
+        {
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Queue));
         }
 
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
-        _queue = queueName;
+        _queue = settings.Queue;
+        _singleActiveConsumer = settings.SingleActiveConsumer;
     }
 
     public void ConsumeMessage(ConsumeMessageAction<TEvent> consumeAction)
@@ -58,7 +66,15 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumer
 
                         var exchange = EventNameAttribute.GetEventName<TEvent>();
                         _channel.ExchangeDeclare(exchange, "fanout", true, false, null);
-                        _channel.QueueDeclare(_queue, true, false, false, null);
+                        _channel.QueueDeclare(
+                            _queue,
+                            true,
+                            false,
+                            false,
+                            arguments: new Dictionary<string, object>
+                                           {
+                                               {"x-single-active-consumer", _singleActiveConsumer}
+                                           });
                         _channel.QueueBind(_queue, exchange, string.Empty);
 
                         var consumer = new EventingBasicConsumer(_channel);
