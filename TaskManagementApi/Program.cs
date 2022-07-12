@@ -8,7 +8,7 @@ using TaskManagementApi.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddSingleton(builder.Configuration.GetSection("RabbitMq").Get<RabbitMqSettings>());
+builder.Services.AddSingleton<IRabbitMqConnection>(_ => new DefaultRabbitMqConnection(builder.Configuration.GetSection("RabbitMq").Get<RabbitMqConnectionSettings>()));
 builder.Services.AddSingleton<IMessageQueuePublisherService, RabbitMqMessageQueuePublisherService>();
 
 builder.Services.AddControllers();

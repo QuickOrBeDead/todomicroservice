@@ -4,15 +4,17 @@
 
     using Nest;
 
+    using SearchApi.Events;
+
     public class TaskEventHandler : BackgroundService
     {
-        private readonly IMessageQueueConsumerService<Model.Task> _messageQueueConsumerService;
+        private readonly IMessageQueueConsumerService<TaskAddedEvent> _messageQueueConsumerService;
 
         private readonly IElasticClient _elasticClient;
 
         private readonly ILogger<TaskEventHandler> _logger;
 
-        public TaskEventHandler(IMessageQueueConsumerService<Model.Task> messageQueueConsumerService, IElasticClient elasticClient, ILogger<TaskEventHandler> logger)
+        public TaskEventHandler(IMessageQueueConsumerService<TaskAddedEvent> messageQueueConsumerService, IElasticClient elasticClient, ILogger<TaskEventHandler> logger)
         {
             _messageQueueConsumerService = messageQueueConsumerService ?? throw new ArgumentNullException(nameof(messageQueueConsumerService));
             _elasticClient = elasticClient ?? throw new ArgumentNullException(nameof(elasticClient));
@@ -36,7 +38,11 @@
 
                             try
                             {
-                                indexResponse = _elasticClient.IndexDocument(m);
+                                indexResponse = _elasticClient.IndexDocument(new Model.Task
+                                                                                 {
+                                                                                     Id = m.TaskId,
+                                                                                     Title = m.Title
+                                                                                 });
                             }
                             catch (Exception e)
                             {
@@ -56,6 +62,8 @@
                             }
 
                             _logger.LogInformation($"Index response for task {m.Id}: Result={indexResponse.Result}, Index={indexResponse.Index}");
+
+                            return true;
                         });
             }
 

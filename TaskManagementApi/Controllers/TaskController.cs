@@ -4,6 +4,7 @@ namespace TaskManagementApi.Controllers
 
     using Microsoft.AspNetCore.Mvc;
 
+    using TaskManagementApi.Events;
     using TaskManagementApi.Infrastructure;
 
     [ApiController]
@@ -34,7 +35,8 @@ namespace TaskManagementApi.Controllers
             await _taskDbContext.Tasks.AddAsync(taskEntity).ConfigureAwait(false);
             await _taskDbContext.SaveChangesAsync().ConfigureAwait(false);
 
-            _messageQueuePublisherService.PublishMessage(taskEntity);
+            // "taskmanagement.task.statuschanged"
+            _messageQueuePublisherService.PublishMessage(new TaskAddedEvent(taskEntity.Id, taskEntity.Title));
         }
     }
 }

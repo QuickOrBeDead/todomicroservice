@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Nest;
-
 namespace SearchApi.Controllers
 {
+    using Microsoft.AspNetCore.Mvc;
+
+    using Nest;
+
     [ApiController]
     [Route("[controller]")]
     public class SearchController : ControllerBase
