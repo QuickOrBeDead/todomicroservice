@@ -11,7 +11,5 @@
         public string Exchange { get; set; }
 
         public string Queue { get; set; }
-
-        public bool DeclareQueue { get; set; }
     }
 }

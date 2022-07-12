@@ -34,8 +34,6 @@
 
         private readonly string _queue;
 
-        private readonly bool _declareQueue;
-
         private bool _disposed;
 
         private IConnection? _connection;
@@ -81,7 +79,6 @@
             _password = settings.Password;
             _exchange = settings.Exchange;
             _queue = settings.Queue;
-            _declareQueue = settings.DeclareQueue;
         }
 
         public void ConsumeMessage(ConsumeAction consumeAction)
@@ -101,13 +98,9 @@
                         _connection = factory.CreateConnection();
                         _channel = _connection.CreateModel();
 
-                        _channel.DeclareExchange(_exchange);
-
-                        if (_declareQueue)
-                        {
-                            _channel.QueueDeclare(_queue, true, false, false, null);
-                            _channel.QueueBind(_queue, _exchange, string.Empty);
-                        }
+                        _channel.ExchangeDeclare(_exchange, "fanout", true, false, null);
+                        _channel.QueueDeclare(_queue, true, false, false, null);
+                        _channel.QueueBind(_queue, _exchange, string.Empty);
 
                         var consumer = new EventingBasicConsumer(_channel);
                         consumer.Received += (_, e) =>

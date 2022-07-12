@@ -71,15 +71,6 @@ services:
       ports:
         - 3000:3000
 
-  unroutedmessageservice:
-    image: ${DOCKER_REGISTRY-}unroutedmessageservice
-    restart: always
-    depends_on:
-      - rabbitmq
-    build:
-      context: .
-      dockerfile: UnroutedMessageService/Dockerfile
-
   taskmanagementapi:
     image: ${DOCKER_REGISTRY-}taskmanagementapi
     restart: always

@@ -9,8 +9,6 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessageQueue", "MessageQueue\MessageQueue.csproj", "{C9527EB1-CAC6-4B98-B8EE-6C239F271CFA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnroutedMessageService", "UnroutedMessageService\UnroutedMessageService.csproj", "{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SearchApi", "SearchApi\SearchApi.csproj", "{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuditLogApi", "AuditLogApi\AuditLogApi.csproj", "{D94021EF-10D4-46E6-981D-F13BCA3A0C26}"
@@ -44,10 +42,6 @@ Global
 		{C9527EB1-CAC6-4B98-B8EE-6C239F271CFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9527EB1-CAC6-4B98-B8EE-6C239F271CFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9527EB1-CAC6-4B98-B8EE-6C239F271CFA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{06DFCBC1-D857-4EED-9DE9-05EBA80141D4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A6C9150-ACEB-4597-8C34-16B6A3F8E1E1}.Release|Any CPU.ActiveCfg = Release|Any CPU

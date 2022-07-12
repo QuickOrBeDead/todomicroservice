@@ -107,7 +107,7 @@
                         var factory = new ConnectionFactory { HostName = _host, UserName = _userName, Password = _password };
                         _connection = factory.CreateConnection();
                         _channel = _connection.CreateModel();
-                        _channel.DeclareExchange(_exchange);
+                        _channel.ExchangeDeclare(_exchange, "fanout", true, false, null);
                     });
         }
 
