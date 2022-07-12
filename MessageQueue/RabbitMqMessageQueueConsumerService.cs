@@ -14,10 +14,16 @@ public interface IMessageQueueConsumerService<out TEvent> : IDisposable
     void ConsumeMessage(ConsumeMessageAction<TEvent> consumeAction);
 }
 
-public delegate bool ConsumeMessageAction<in TModel>(TModel model, string messageType);
+public interface IMessageQueueConsumerService : IDisposable
+{
+    void ConsumeMessage(ConsumeMessageAction consumeAction);
+}
 
-public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumerService<TEvent>
-    where TEvent : EventBase
+public delegate bool ConsumeMessageAction<in TEvent>(TEvent @event, string eventType);
+
+public delegate bool ConsumeMessageAction(ReadOnlySpan<byte> body, string eventType);
+
+public class RabbitMqGenericMessageQueueConsumerService : IMessageQueueConsumerService
 {
     private readonly IRabbitMqConnection _connection;
 
@@ -31,7 +37,9 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumer
 
     private readonly bool _singleActiveConsumer;
 
-    public RabbitMqMessageQueueConsumerService(IRabbitMqConnection connection, RabbitMqConsumerSettings settings)
+    private readonly string _exchange;
+
+    public RabbitMqGenericMessageQueueConsumerService(IRabbitMqConnection connection, RabbitMqConsumerSettings settings)
     {
         if (settings == null)
         {
@@ -40,16 +48,22 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumer
 
         if (string.IsNullOrWhiteSpace(settings.Queue))
         {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Queue));
+            throw new ArgumentException($"Settings.{nameof(settings.Queue)} Value cannot be null or whitespace.", nameof(settings));
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.Exchange))
+        {
+            throw new ArgumentException($"Settings.{nameof(settings.Exchange)} Value cannot be null or whitespace.", nameof(settings));
         }
 
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
         _queue = settings.Queue;
+        _exchange = settings.Exchange;
         _singleActiveConsumer = settings.SingleActiveConsumer;
     }
 
-    public void ConsumeMessage(ConsumeMessageAction<TEvent> consumeAction)
+    public void ConsumeMessage(ConsumeMessageAction consumeAction)
     {
         if (consumeAction == null)
         {
@@ -64,8 +78,7 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumer
                     {
                         _channel = _connection.CreateChannel();
 
-                        var exchange = EventNameAttribute.GetEventName<TEvent>();
-                        _channel.ExchangeDeclare(exchange, "fanout", true, false, null);
+                        _channel.ExchangeDeclare(_exchange, "fanout", true, false, null);
                         _channel.QueueDeclare(
                             _queue,
                             true,
@@ -75,19 +88,12 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumer
                                            {
                                                {"x-single-active-consumer", _singleActiveConsumer}
                                            });
-                        _channel.QueueBind(_queue, exchange, string.Empty);
+                        _channel.QueueBind(_queue, _exchange, string.Empty);
 
                         var consumer = new EventingBasicConsumer(_channel);
                         consumer.Received += (_, e) =>
                             {
-                                var @event = JsonSerializer.Deserialize<TEvent>(Encoding.UTF8.GetString(e.Body.Span));
-                                if (@event == null)
-                                {
-                                    _channel.BasicNack(e.DeliveryTag, false, true);
-                                    return;
-                                }
-
-                                var ack = consumeAction(@event, GetEventName(e));
+                                var ack = consumeAction(e.Body.Span, GetEventName(e));
 
                                 if (ack)
                                 {
@@ -139,7 +145,7 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumer
         }
     }
 
-    ~RabbitMqMessageQueueConsumerService()
+    ~RabbitMqGenericMessageQueueConsumerService()
     {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         Dispose(false);
@@ -149,5 +155,37 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : IMessageQueueConsumer
     {
         Dispose(true);
         GC.SuppressFinalize(this);
+    }
+}
+
+public class RabbitMqMessageQueueConsumerService<TEvent> : RabbitMqGenericMessageQueueConsumerService, IMessageQueueConsumerService<TEvent>
+    where TEvent : EventBase
+{
+    public RabbitMqMessageQueueConsumerService(IRabbitMqConnection connection, RabbitMqConsumerSettings settings)
+        : base(connection, SetExchangeName(settings))
+    {
+    }
+
+    public void ConsumeMessage(ConsumeMessageAction<TEvent> consumeAction)
+    {
+        if (consumeAction == null)
+        {
+            throw new ArgumentNullException(nameof(consumeAction));
+        }
+
+        ConsumeMessage(
+            (body, eventType) =>
+                {
+                    var @event = JsonSerializer.Deserialize<TEvent>(Encoding.UTF8.GetString(body));
+                    return @event != null && consumeAction(@event, eventType);
+                });
+
+       
+    }
+
+    private static RabbitMqConsumerSettings SetExchangeName(RabbitMqConsumerSettings settings)
+    {
+        settings.Exchange = EventNameAttribute.GetEventName<TEvent>();
+        return settings;
     }
 }

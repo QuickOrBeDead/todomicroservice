@@ -4,17 +4,17 @@ public class EventBase
 {
     public Guid Id { get; }
 
-    public DateTime CreationDate { get; }
+    public DateTime CreateDate { get; }
 
     protected EventBase()
     {
         Id = Guid.NewGuid();
-        CreationDate = DateTime.UtcNow;
+        CreateDate = DateTime.UtcNow;
     }
 
     protected EventBase(Guid id, DateTime createDate)
     {
         Id = id;
-        CreationDate = createDate;
+        CreateDate = createDate;
     }
 }

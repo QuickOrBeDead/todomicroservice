@@ -1,80 +1,79 @@
-﻿namespace SearchApi.Infrastructure
+﻿namespace SearchApi.Infrastructure;
+
+using MessageQueue;
+
+using Nest;
+
+using SearchApi.Events;
+
+public class TaskEventHandler : BackgroundService
 {
-    using MessageQueue;
+    private readonly IMessageQueueConsumerService<TaskAddedEvent> _messageQueueConsumerService;
 
-    using Nest;
+    private readonly IElasticClient _elasticClient;
 
-    using SearchApi.Events;
+    private readonly ILogger<TaskEventHandler> _logger;
 
-    public class TaskEventHandler : BackgroundService
+    public TaskEventHandler(IMessageQueueConsumerService<TaskAddedEvent> messageQueueConsumerService, IElasticClient elasticClient, ILogger<TaskEventHandler> logger)
     {
-        private readonly IMessageQueueConsumerService<TaskAddedEvent> _messageQueueConsumerService;
+        _messageQueueConsumerService = messageQueueConsumerService ?? throw new ArgumentNullException(nameof(messageQueueConsumerService));
+        _elasticClient = elasticClient ?? throw new ArgumentNullException(nameof(elasticClient));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
-        private readonly IElasticClient _elasticClient;
-
-        private readonly ILogger<TaskEventHandler> _logger;
-
-        public TaskEventHandler(IMessageQueueConsumerService<TaskAddedEvent> messageQueueConsumerService, IElasticClient elasticClient, ILogger<TaskEventHandler> logger)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        if (!stoppingToken.IsCancellationRequested)
         {
-            _messageQueueConsumerService = messageQueueConsumerService ?? throw new ArgumentNullException(nameof(messageQueueConsumerService));
-            _elasticClient = elasticClient ?? throw new ArgumentNullException(nameof(elasticClient));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
+            _elasticClient.Indices.Create(
+                $"task-{DateTime.UtcNow:dd-MM-yyyy-HH-mm-ss}",
+                x => x.Map<Model.Task>(m => m.AutoMap()));
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            if (!stoppingToken.IsCancellationRequested)
-            {
-                _elasticClient.Indices.Create(
-                    $"task-{DateTime.UtcNow:dd-MM-yyyy-HH-mm-ss}",
-                    x => x.Map<Model.Task>(m => m.AutoMap()));
+            _messageQueueConsumerService.ConsumeMessage(
+                (m, _) =>
+                    {
+                        _logger.LogInformation($"Consuming task {m.Id}");
 
-                _messageQueueConsumerService.ConsumeMessage(
-                    (m, _) =>
+                        IndexResponse indexResponse;
+
+                        try
                         {
-                            _logger.LogInformation($"Consuming task {m.Id}");
+                            indexResponse = _elasticClient.IndexDocument(new Model.Task
+                                                                             {
+                                                                                 Id = m.TaskId,
+                                                                                 Title = m.Title
+                                                                             });
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError(e, $"Index document error for task {m.Id}");
+                            throw;
+                        }
 
-                            IndexResponse indexResponse;
-
-                            try
+                        if (!indexResponse.IsValid || indexResponse.Result != Result.Created)
+                        {
+                            var errorMessage = $"{m.Id} task could not be indexed";
+                            if (indexResponse.OriginalException != null)
                             {
-                                indexResponse = _elasticClient.IndexDocument(new Model.Task
-                                                                                 {
-                                                                                     Id = m.TaskId,
-                                                                                     Title = m.Title
-                                                                                 });
-                            }
-                            catch (Exception e)
-                            {
-                                 _logger.LogError(e, $"Index document error for task {m.Id}");
-                                throw;
-                            }
-
-                            if (!indexResponse.IsValid || indexResponse.Result != Result.Created)
-                            {
-                                var errorMessage = $"{m.Id} task could not be indexed";
-                                if (indexResponse.OriginalException != null)
-                                {
-                                    LogAndThrowException(new InvalidOperationException(errorMessage, indexResponse.OriginalException));
-                                }
-
-                                LogAndThrowException(new InvalidOperationException(errorMessage));
+                                LogAndThrowException(new InvalidOperationException(errorMessage, indexResponse.OriginalException));
                             }
 
-                            _logger.LogInformation($"Index response for task {m.Id}: Result={indexResponse.Result}, Index={indexResponse.Index}");
+                            LogAndThrowException(new InvalidOperationException(errorMessage));
+                        }
 
-                            return true;
-                        });
-            }
+                        _logger.LogInformation($"Index response for task {m.Id}: Result={indexResponse.Result}, Index={indexResponse.Index}");
 
-            return Task.CompletedTask;
+                        return true;
+                    });
         }
 
-        private void LogAndThrowException(Exception ex)
-        {
-            _logger.LogError(ex, ex.Message);
+        return Task.CompletedTask;
+    }
 
-            throw ex;
-        }
+    private void LogAndThrowException(Exception ex)
+    {
+        _logger.LogError(ex, ex.Message);
+
+        throw ex;
     }
 }
