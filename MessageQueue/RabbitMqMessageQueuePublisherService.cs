@@ -1,141 +1,48 @@
-﻿namespace MessageQueue
+﻿namespace MessageQueue;
+
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
+using System.Text.Json;
+
+using MessageQueue.Events;
+
+using RabbitMQ.Client;
+
+public interface IMessageQueuePublisherService
 {
-    using System.Diagnostics.CodeAnalysis;
-    using System.Text;
-    using System.Text.Json;
+    void PublishMessage<TEvent>([DisallowNull] TEvent @event)
+        where TEvent : EventBase;
+}
 
-    using Polly;
+public class RabbitMqMessageQueuePublisherService : IMessageQueuePublisherService
+{
+    private readonly IRabbitMqConnection _connection;
 
-    using RabbitMQ.Client;
-
-    public interface IMessageQueuePublisherService : IDisposable
+    public RabbitMqMessageQueuePublisherService(IRabbitMqConnection connection)
     {
-        void PublishMessage<TModel>([DisallowNull] TModel model);
-
-        void Publish(ReadOnlyMemory<byte> body, string messageType = "Text");
+        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
     }
 
-    public class RabbitMqMessageQueuePublisherService : IMessageQueuePublisherService
+    public void PublishMessage<TEvent>([DisallowNull] TEvent @event)
+        where TEvent : EventBase
     {
-        private readonly string _host;
-
-        private readonly string _userName;
-
-        private readonly string _password;
-
-        private readonly string _exchange;
-
-        private IConnection? _connection;
-
-        private IModel? _channel;
-
-        private bool _disposed;
-
-        public RabbitMqMessageQueuePublisherService(RabbitMqSettings settings)
+        if (@event == null)
         {
-            if (settings == null)
-            {
-                throw new ArgumentNullException(nameof(settings));
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.UserName))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.UserName));
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.Password))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Password));
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.Exchange))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Exchange));
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.Queue))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Queue));
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.Host))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(settings.Host));
-            }
-
-            _host = settings.Host;
-            _userName = settings.UserName;
-            _password = settings.Password;
-            _exchange = settings.Exchange;
-
-            Connect();
+            throw new ArgumentNullException(nameof(@event));
         }
 
-        public void PublishMessage<TModel>([DisallowNull] TModel model)
-        {
-            if (model == null)
-            {
-                throw new ArgumentNullException(nameof(model));
-            }
+        using var channel = _connection.CreateChannel();
 
-            Publish(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(model)), typeof(TModel).Name);
-        }
+        var eventName = EventNameAttribute.GetEventName<TEvent>();
+        channel.ExchangeDeclare(eventName, "fanout", true, false, null);
 
-        public void Publish(ReadOnlyMemory<byte> body, string messageType = "Text")
-        {
-            if (_channel == null)
-            {
-                throw new InvalidOperationException("Channel cannot be null.");
-            }
+        var properties = channel.CreateBasicProperties();
+        properties.Headers = new Dictionary<string, object> { { "EventName", eventName } };
 
-            var properties = _channel.CreateBasicProperties();
-            properties.Headers = new Dictionary<string, object> { { "MessageType", messageType } };
-
-            _channel.BasicPublish(
-                _exchange,
-                string.Empty,
-                properties,
-                body);
-        }
-
-        private void Connect()
-        {
-            Policy.Handle<Exception>()
-                  .WaitAndRetry(10, r => TimeSpan.FromSeconds(5))
-                  .Execute(() =>
-                    {
-                        var factory = new ConnectionFactory { HostName = _host, UserName = _userName, Password = _password };
-                        _connection = factory.CreateConnection();
-                        _channel = _connection.CreateModel();
-                        _channel.ExchangeDeclare(_exchange, "fanout", true, false, null);
-                    });
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    // dispose managed state (managed objects)
-                }
-
-                _channel?.Dispose();
-                _connection?.Dispose();
-                _disposed = true;
-            }
-        }
-
-        ~RabbitMqMessageQueuePublisherService()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(false);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+        channel.BasicPublish(
+            eventName,
+            string.Empty,
+            properties,
+            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(@event)));
     }
 }
