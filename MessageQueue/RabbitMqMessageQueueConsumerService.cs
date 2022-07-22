@@ -37,7 +37,7 @@ public class RabbitMqGenericMessageQueueConsumerService : IMessageQueueConsumerS
 
     private readonly bool _singleActiveConsumer;
 
-    private readonly string _exchange;
+    private readonly IList<string> _exchanges;
 
     public RabbitMqGenericMessageQueueConsumerService(IRabbitMqConnection connection, RabbitMqConsumerSettings settings)
     {
@@ -51,15 +51,15 @@ public class RabbitMqGenericMessageQueueConsumerService : IMessageQueueConsumerS
             throw new ArgumentException($"Settings.{nameof(settings.Queue)} Value cannot be null or whitespace.", nameof(settings));
         }
 
-        if (string.IsNullOrWhiteSpace(settings.Exchange))
+        if (settings.Exchanges == null || settings.Exchanges.Count == 0)
         {
-            throw new ArgumentException($"Settings.{nameof(settings.Exchange)} Value cannot be null or whitespace.", nameof(settings));
+            throw new ArgumentException($"Settings.{nameof(settings.Exchanges)} Value cannot be null or empty.", nameof(settings));
         }
 
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
         _queue = settings.Queue;
-        _exchange = settings.Exchange;
+        _exchanges = settings.Exchanges;
         _singleActiveConsumer = settings.SingleActiveConsumer;
     }
 
@@ -78,7 +78,11 @@ public class RabbitMqGenericMessageQueueConsumerService : IMessageQueueConsumerS
                     {
                         _channel = _connection.CreateChannel();
 
-                        _channel.ExchangeDeclare(_exchange, "fanout", true, false, null);
+                        foreach (var exchange in _exchanges)
+                        {
+                            _channel.ExchangeDeclare(exchange, "fanout", true, false, null);
+                        }
+
                         _channel.QueueDeclare(
                             _queue,
                             true,
@@ -88,8 +92,12 @@ public class RabbitMqGenericMessageQueueConsumerService : IMessageQueueConsumerS
                                            {
                                                {"x-single-active-consumer", _singleActiveConsumer}
                                            });
-                        _channel.QueueBind(_queue, _exchange, string.Empty);
 
+                        foreach (var exchange in _exchanges)
+                        {
+                            _channel.QueueBind(_queue, exchange, string.Empty);
+                        }
+                        
                         var consumer = new EventingBasicConsumer(_channel);
                         consumer.Received += (_, e) =>
                             {
@@ -188,13 +196,11 @@ public class RabbitMqMessageQueueConsumerService<TEvent> : RabbitMqGenericMessag
                     var @event = JsonSerializer.Deserialize<TEvent>(Encoding.UTF8.GetString(body));
                     return @event != null && consumeAction(@event, eventType);
                 });
-
-       
     }
 
     private static RabbitMqConsumerSettings SetExchangeName(RabbitMqConsumerSettings settings)
     {
-        settings.Exchange = EventNameAttribute.GetEventName<TEvent>();
+        settings.Exchanges = new List<string> {EventNameAttribute.GetEventName<TEvent>()};
         return settings;
     }
 }
