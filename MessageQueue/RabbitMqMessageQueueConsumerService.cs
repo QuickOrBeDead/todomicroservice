@@ -93,15 +93,24 @@ public class RabbitMqGenericMessageQueueConsumerService : IMessageQueueConsumerS
                         var consumer = new EventingBasicConsumer(_channel);
                         consumer.Received += (_, e) =>
                             {
-                                var ack = consumeAction(e.Body.Span, GetEventName(e));
+                                try
+                                {
+                                    var ack = consumeAction(e.Body.Span, GetEventName(e));
 
-                                if (ack)
-                                {
-                                    _channel.BasicAck(e.DeliveryTag, false);
+                                    if (ack)
+                                    {
+                                        _channel.BasicAck(e.DeliveryTag, false);
+                                    }
+                                    else
+                                    {
+                                        _channel.BasicNack(e.DeliveryTag, false, true);
+                                    }
                                 }
-                                else
+                                catch (Exception)
                                 {
-                                    _channel.BasicNack(e.DeliveryTag, false, true);
+                                        _channel.BasicNack(e.DeliveryTag, false, true);
+
+                                        throw;
                                 }
                             };
                         _channel.BasicQos(0, 1, false);
