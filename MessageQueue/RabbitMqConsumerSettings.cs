@@ -1,8 +1,5 @@
 ﻿namespace MessageQueue;
 
-using System.Collections.Immutable;
-using System.Collections.ObjectModel;
-
 public sealed class RabbitMqConsumerSettings
 {
     private List<string>? _exchanges;
