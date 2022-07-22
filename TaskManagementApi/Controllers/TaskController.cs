@@ -27,16 +27,32 @@ namespace TaskManagementApi.Controllers
             return _taskDbContext.Tasks.ToList();
         }
 
-        [HttpPost(Name = "AddTask")]
-        public async Task Add(string title)
+        [HttpPost("Add")]
+        public async Task Add([FromBody]string title)
         {
             var taskEntity = new TaskEntity { Title = title };
 
             await _taskDbContext.Tasks.AddAsync(taskEntity).ConfigureAwait(false);
             await _taskDbContext.SaveChangesAsync().ConfigureAwait(false);
 
-            // "taskmanagement.task.statuschanged"
             _messageQueuePublisherService.PublishMessage(new TaskAddedEvent(taskEntity.Id, taskEntity.Title));
+        }
+
+        [HttpPost("ChangeCompleted/{taskId}")]
+        public async Task<ActionResult> ChangeCompleted(int taskId, bool completed)
+        {
+            var taskEntity = await _taskDbContext.Tasks.FindAsync(taskId).ConfigureAwait(false);
+            if (taskEntity == null)
+            {
+                return NotFound();
+            }
+
+            taskEntity.Completed = completed;
+            await _taskDbContext.SaveChangesAsync().ConfigureAwait(false);
+
+            _messageQueuePublisherService.PublishMessage(new TaskStatusChangedEvent(taskEntity.Id, completed));
+
+            return Ok();
         }
     }
 }
