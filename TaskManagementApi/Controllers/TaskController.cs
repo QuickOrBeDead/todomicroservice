@@ -25,7 +25,7 @@ namespace TaskManagementApi.Controllers
         [HttpGet("GetTasks", Name = "GetTasks")]
         public IEnumerable<TaskListItemViewModel> Get()
         {
-            return _taskDbContext.Tasks.Select(x => new TaskListItemViewModel { Id = x.Id, Title = x.Title, Completed = x.Completed }).ToList();
+            return _taskDbContext.Tasks.Select(x => new TaskListItemViewModel { Id = x.Id, Title = x.Title, Completed = x.Completed }).OrderBy(x => x.Id).ToList();
         }
 
         [HttpPost("AddTask", Name = "AddTask")]

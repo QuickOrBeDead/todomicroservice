@@ -9,6 +9,7 @@
     "generate-task-management-api": "openapi-generator-cli generate -i http://localhost:8081/swagger/v1/swagger.json -g typescript-axios -o src/metadata/task-management-api"
   },
   "dependencies": {
+    "bootstrap": "^5.2.0",
     "core-js": "^3.8.3",
     "vue": "^3.2.13",
     "vue-class-component": "^8.0.0-0",
@@ -24,6 +25,7 @@
     "@vue/cli-plugin-typescript": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
     "@vue/eslint-config-typescript": "^9.1.0",
+    "error-stack-parser": "2.1.4",
     "eslint": "^7.32.0",
     "eslint-plugin-vue": "^8.0.3",
     "sass": "^1.32.7",
