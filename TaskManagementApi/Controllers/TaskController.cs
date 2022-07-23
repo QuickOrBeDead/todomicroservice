@@ -6,6 +6,7 @@ namespace TaskManagementApi.Controllers
 
     using TaskManagementApi.Events;
     using TaskManagementApi.Infrastructure;
+    using TaskManagementApi.ViewModel;
 
     [ApiController]
     [Route("[controller]")]
@@ -17,20 +18,20 @@ namespace TaskManagementApi.Controllers
 
         public TaskController(TaskDbContext taskDbContext, IMessageQueuePublisherService messageQueuePublisherService)
         {
-            _taskDbContext = taskDbContext;
-            _messageQueuePublisherService = messageQueuePublisherService;
+            _taskDbContext = taskDbContext ?? throw new ArgumentNullException(nameof(taskDbContext));
+            _messageQueuePublisherService = messageQueuePublisherService ?? throw new ArgumentNullException(nameof(messageQueuePublisherService));
         }
 
-        [HttpGet(Name = "GetTasks")]
-        public IEnumerable<TaskEntity> Get()
+        [HttpGet("GetTasks", Name = "GetTasks")]
+        public IEnumerable<TaskListItemViewModel> Get()
         {
-            return _taskDbContext.Tasks.ToList();
+            return _taskDbContext.Tasks.Select(x => new TaskListItemViewModel { Id = x.Id, Title = x.Title, Completed = x.Completed }).ToList();
         }
 
-        [HttpPost("Add")]
-        public async Task Add([FromBody]string title)
+        [HttpPost("AddTask", Name = "AddTask")]
+        public async Task Add(TaskAddViewModel addViewModel)
         {
-            var taskEntity = new TaskEntity { Title = title };
+            var taskEntity = new TaskEntity { Title = addViewModel.Title };
 
             await _taskDbContext.Tasks.AddAsync(taskEntity).ConfigureAwait(false);
             await _taskDbContext.SaveChangesAsync().ConfigureAwait(false);
@@ -38,7 +39,7 @@ namespace TaskManagementApi.Controllers
             _messageQueuePublisherService.PublishMessage(new TaskAddedEvent(taskEntity.Id, taskEntity.Title));
         }
 
-        [HttpPost("ChangeCompleted/{taskId}")]
+        [HttpPost("ChangeCompleted/{taskId}", Name = "ChangeCompleted")]
         public async Task<ActionResult> ChangeCompleted(int taskId, bool completed)
         {
             var taskEntity = await _taskDbContext.Tasks.FindAsync(taskId).ConfigureAwait(false);
