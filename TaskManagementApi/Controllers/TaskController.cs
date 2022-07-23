@@ -22,6 +22,7 @@ namespace TaskManagementApi.Controllers
             _messageQueuePublisherService = messageQueuePublisherService ?? throw new ArgumentNullException(nameof(messageQueuePublisherService));
         }
 
+        [Produces("application/json")]
         [HttpGet("GetTasks", Name = "GetTasks")]
         public IEnumerable<TaskListItemViewModel> Get()
         {

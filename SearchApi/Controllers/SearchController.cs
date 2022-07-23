@@ -4,6 +4,8 @@ namespace SearchApi.Controllers
 
     using Nest;
 
+    using SearchApi.ViewModel;
+
     [ApiController]
     [Route("[controller]")]
     public class SearchController : ControllerBase
@@ -15,16 +17,22 @@ namespace SearchApi.Controllers
             _elasticClient = elasticClient;
         }
 
-        [HttpGet(Name = "GetAll")]
-        public IEnumerable<Infrastructure.Model.Task> GetAll()
+        [Produces("application/json")]
+        [HttpPost(Name = "Search")]
+        public IEnumerable<TaskSearchResultViewModel> Search([FromBody]TaskSearchViewModel searchViewModel)
         {
-            var searchResponse = _elasticClient.Search<Infrastructure.Model.Task>(s => s
-                .Query(q => q
-                    .MatchAll()
-                )
-            );
+            var searchResponse = _elasticClient.Search<Infrastructure.Model.Task>(
+                s => s.Query(
+                    q => q
+                        .Match(m => 
+                            m.Field(f => f.Title)
+                                .Query(searchViewModel.Text)) &&
+                         q.ConstantScore(m =>
+                             m.Filter(f => 
+                                 f.Term(t => t.Completed, searchViewModel.Completed))))
+                    .Sort(d => d.Ascending(f => f.Id)));
 
-            return searchResponse.Documents;
+            return searchResponse.Documents.Select(x => new TaskSearchResultViewModel { Id = x.Id, Completed = x.Completed, Title = x.Title});
         }
     }
 }

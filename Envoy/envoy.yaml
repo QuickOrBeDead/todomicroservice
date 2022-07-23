@@ -40,6 +40,18 @@ static_resources:
                   auto_host_rewrite: true
                   prefix_rewrite: "/"
                   cluster: task_management_service
+              - match:
+                  prefix: "/task-search/swagger"
+                route:
+                  auto_host_rewrite: true
+                  prefix_rewrite: "/swagger"
+                  cluster: task_search_service
+              - match:
+                  prefix: "/task-search/"
+                route:
+                  auto_host_rewrite: true
+                  prefix_rewrite: "/"
+                  cluster: task_search_service
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
@@ -57,4 +69,17 @@ static_resources:
             address:
               socket_address:
                 address: taskmanagementapi
+                port_value: 80
+  - name: task_search_service
+    type: LOGICAL_DNS
+    dns_lookup_family: V4_ONLY
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: task_search_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: searchapi
                 port_value: 80

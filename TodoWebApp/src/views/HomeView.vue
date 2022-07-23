@@ -5,12 +5,36 @@
         <div class="col-12">
            <div class="d-flex flex-row mb-3 justify-content-center align-items-center">
             <div class="p-2"><img alt="logo" src="../assets/logo.png"></div>
-            <div class="p-2"><h1>Todo App</h1></div>
+            <div class="p-2"><h1>Todo Microservice App</h1></div>
           </div>
         </div>
       </div>
     </div>
-    
+
+  <div class="container">
+        <div class="row">
+          <div class="col-1"></div>
+          <div class="col-9">
+            <div class="input-group mb-3">
+              <input v-model="searchText" type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="button-search">
+              <button @click="search" class="btn btn-outline-primary" type="button" id="button-search">Search</button>
+            </div>
+          </div>
+          <div class="col-2">
+             <div class="btn-group" role="group" aria-label="Task Status">
+                <input v-model="searchCompleted" @change="search" value="" type="radio" class="btn-check" name="btn-radio-task-status" id="btn-radio-task-status-all" autocomplete="off" checked>
+                <label class="btn btn-outline-primary" for="btn-radio-task-status-all">All</label>
+
+                <input v-model="searchCompleted" @change="search" value="true" type="radio" class="btn-check" name="btn-radio-task-status" id="btn-radio-task-status-done" autocomplete="off">
+                <label class="btn btn-outline-primary" for="btn-radio-task-status-done">Done</label>
+
+                <input v-model="searchCompleted" @change="search" value="false" type="radio" class="btn-check" name="btn-radio-task-status" id="btn-radio-task-status-undone" autocomplete="off">
+                <label class="btn btn-outline-primary" for="btn-radio-task-status-undone">Undone</label>
+              </div>
+          </div>
+      </div>
+    </div>
+
     <div class="container text-center">
       <div class="row">
         <div class="col">
@@ -88,13 +112,17 @@ ul li.checked::before {
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { createTaskManagementApi } from '@/api'
+import { createTaskManagementApi, createTaskSearchApi } from '@/api'
 import { TaskApi, TaskListItemViewModel } from '@/metadata/task-management-api'
+import { SearchApi } from '@/metadata/task-search-api'
 
 @Options({})
 export default class HomeView extends Vue {
   taskApi: TaskApi = createTaskManagementApi(TaskApi)
+  taskSearchApi: SearchApi = createTaskSearchApi(SearchApi)
   tasks: TaskListItemViewModel[] = []
+  searchText: string | null = null
+  searchCompleted = ""
 
   mounted(): void {
       this.listTasks()
@@ -107,6 +135,26 @@ export default class HomeView extends Vue {
   changeCompleted(task: TaskListItemViewModel): void {
     const completed = !task.completed;
     this.taskApi.changeCompleted(task.id as number, completed).then(() => task.completed = completed)
+  }
+
+  search(): void {
+    this.taskSearchApi.search({ text: this.searchText, completed: this.getSearchCompleted() }).then(x => {
+        this.tasks = []
+        x.data.forEach(task => {
+          this.tasks.push(task)
+        });
+      })
+  }
+
+  getSearchCompleted(): boolean | null {
+    switch (this.searchCompleted) {
+      case "true":
+        return true
+      case "false":
+        return false
+      default:
+        return null
+    }
   }
 }
 </script>
