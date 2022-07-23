@@ -24,25 +24,38 @@ import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } fr
 /**
  * 
  * @export
- * @interface TaskEntity
+ * @interface TaskAddViewModel
  */
-export interface TaskEntity {
+export interface TaskAddViewModel {
+    /**
+     * 
+     * @type {string}
+     * @memberof TaskAddViewModel
+     */
+    'title': string;
+}
+/**
+ * 
+ * @export
+ * @interface TaskListItemViewModel
+ */
+export interface TaskListItemViewModel {
     /**
      * 
      * @type {number}
-     * @memberof TaskEntity
+     * @memberof TaskListItemViewModel
      */
     'id'?: number;
     /**
      * 
      * @type {string}
-     * @memberof TaskEntity
+     * @memberof TaskListItemViewModel
      */
     'title'?: string | null;
     /**
      * 
      * @type {boolean}
-     * @memberof TaskEntity
+     * @memberof TaskListItemViewModel
      */
     'completed'?: boolean;
 }
@@ -55,12 +68,12 @@ export const TaskApiAxiosParamCreator = function (configuration?: Configuration)
     return {
         /**
          * 
-         * @param {string} [title] 
+         * @param {TaskAddViewModel} [taskAddViewModel] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        addTask: async (title?: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/Task`;
+        addTask: async (taskAddViewModel?: TaskAddViewModel, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/Task/AddTask`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -72,8 +85,45 @@ export const TaskApiAxiosParamCreator = function (configuration?: Configuration)
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            if (title !== undefined) {
-                localVarQueryParameter['title'] = title;
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(taskAddViewModel, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {number} taskId 
+         * @param {boolean} [completed] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        changeCompleted: async (taskId: number, completed?: boolean, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'taskId' is not null or undefined
+            assertParamExists('changeCompleted', 'taskId', taskId)
+            const localVarPath = `/Task/ChangeCompleted/{taskId}`
+                .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (completed !== undefined) {
+                localVarQueryParameter['completed'] = completed;
             }
 
 
@@ -93,7 +143,7 @@ export const TaskApiAxiosParamCreator = function (configuration?: Configuration)
          * @throws {RequiredError}
          */
         getTasks: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/Task`;
+            const localVarPath = `/Task/GetTasks`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -128,12 +178,23 @@ export const TaskApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @param {string} [title] 
+         * @param {TaskAddViewModel} [taskAddViewModel] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async addTask(title?: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.addTask(title, options);
+        async addTask(taskAddViewModel?: TaskAddViewModel, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.addTask(taskAddViewModel, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @param {number} taskId 
+         * @param {boolean} [completed] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async changeCompleted(taskId: number, completed?: boolean, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.changeCompleted(taskId, completed, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -141,7 +202,7 @@ export const TaskApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getTasks(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<TaskEntity>>> {
+        async getTasks(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<TaskListItemViewModel>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getTasks(options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
@@ -157,19 +218,29 @@ export const TaskApiFactory = function (configuration?: Configuration, basePath?
     return {
         /**
          * 
-         * @param {string} [title] 
+         * @param {TaskAddViewModel} [taskAddViewModel] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        addTask(title?: string, options?: any): AxiosPromise<void> {
-            return localVarFp.addTask(title, options).then((request) => request(axios, basePath));
+        addTask(taskAddViewModel?: TaskAddViewModel, options?: any): AxiosPromise<void> {
+            return localVarFp.addTask(taskAddViewModel, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {number} taskId 
+         * @param {boolean} [completed] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        changeCompleted(taskId: number, completed?: boolean, options?: any): AxiosPromise<void> {
+            return localVarFp.changeCompleted(taskId, completed, options).then((request) => request(axios, basePath));
         },
         /**
          * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTasks(options?: any): AxiosPromise<Array<TaskEntity>> {
+        getTasks(options?: any): AxiosPromise<Array<TaskListItemViewModel>> {
             return localVarFp.getTasks(options).then((request) => request(axios, basePath));
         },
     };
@@ -184,13 +255,25 @@ export const TaskApiFactory = function (configuration?: Configuration, basePath?
 export class TaskApi extends BaseAPI {
     /**
      * 
-     * @param {string} [title] 
+     * @param {TaskAddViewModel} [taskAddViewModel] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TaskApi
      */
-    public addTask(title?: string, options?: AxiosRequestConfig) {
-        return TaskApiFp(this.configuration).addTask(title, options).then((request) => request(this.axios, this.basePath));
+    public addTask(taskAddViewModel?: TaskAddViewModel, options?: AxiosRequestConfig) {
+        return TaskApiFp(this.configuration).addTask(taskAddViewModel, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {number} taskId 
+     * @param {boolean} [completed] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TaskApi
+     */
+    public changeCompleted(taskId: number, completed?: boolean, options?: AxiosRequestConfig) {
+        return TaskApiFp(this.configuration).changeCompleted(taskId, completed, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

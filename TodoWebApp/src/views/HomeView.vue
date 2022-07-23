@@ -13,7 +13,7 @@
 import { Options, Vue } from 'vue-class-component';
 import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
 import { createTaskManagementApi } from '@/api'
-import { TaskApi, TaskEntity } from '@/metadata/task-management-api';
+import { TaskApi, TaskListItemViewModel } from '@/metadata/task-management-api';
 
 @Options({
   components: {
@@ -22,7 +22,7 @@ import { TaskApi, TaskEntity } from '@/metadata/task-management-api';
 })
 export default class HomeView extends Vue {
   taskApi: TaskApi = createTaskManagementApi(TaskApi)
-  tasks: TaskEntity[] = []
+  tasks: TaskListItemViewModel[] = []
 
   listTasks(): void {
     this.taskApi.getTasks().then(x => this.tasks = x.data)
