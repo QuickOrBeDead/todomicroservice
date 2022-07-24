@@ -2,8 +2,10 @@
 
 using System.ComponentModel.DataAnnotations;
 
-public sealed class TaskAddViewModel
+public sealed class TaskUpdateViewModel
 {
+    public int TaskId { get; set; }
+
     [StringLength(300)]
     [Required]
     public string? Title { get; set; }

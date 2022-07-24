@@ -56,5 +56,35 @@ namespace TaskManagementApi.Controllers
 
             return Ok();
         }
+
+        [HttpPost("UpdateTask", Name = "UpdateTask")]
+        public async Task<ActionResult> UpdateTask(TaskUpdateViewModel updateViewModel)
+        {
+            var taskEntity = await _taskDbContext.Tasks.FindAsync(updateViewModel.TaskId).ConfigureAwait(false);
+            if (taskEntity == null)
+            {
+                return NotFound();
+            }
+
+            taskEntity.Title = updateViewModel.Title;
+            await _taskDbContext.SaveChangesAsync().ConfigureAwait(false);
+
+            _messageQueuePublisherService.PublishMessage(new TaskUpdatedEvent(taskEntity.Id, taskEntity.Title));
+
+            return Ok();
+        }
+
+        [HttpPost("DeleteTask/{taskId}", Name = "DeleteTask")]
+        public async Task<ActionResult> DeleteTask(int taskId)
+        {
+            var taskEntity = new TaskEntity { Id = taskId };
+            _taskDbContext.Tasks.Attach(taskEntity);
+            _taskDbContext.Tasks.Remove(taskEntity);
+            await _taskDbContext.SaveChangesAsync().ConfigureAwait(false);
+
+            _messageQueuePublisherService.PublishMessage(new TaskDeletedEvent(taskEntity.Id));
+
+            return Ok();
+        }
     }
 }

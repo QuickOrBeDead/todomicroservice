@@ -12,6 +12,10 @@ public class TaskEventHandler : BackgroundService
 
     private readonly IMessageQueueConsumerService<TaskStatusChangedEvent> _taskStatusChangedConsumerService;
 
+    private readonly IMessageQueueConsumerService<TaskUpdatedEvent> _taskUpdatedConsumerService;
+
+    private readonly IMessageQueueConsumerService<TaskDeletedEvent> _taskDeletedConsumerService;
+
     private readonly IElasticClient _elasticClient;
 
     private readonly ILogger<TaskEventHandler> _logger;
@@ -19,11 +23,15 @@ public class TaskEventHandler : BackgroundService
     public TaskEventHandler(
         IMessageQueueConsumerService<TaskAddedEvent> taskAddedConsumerService, 
         IMessageQueueConsumerService<TaskStatusChangedEvent> taskStatusChangedConsumerService,
+        IMessageQueueConsumerService<TaskUpdatedEvent> taskUpdatedConsumerService,
+        IMessageQueueConsumerService<TaskDeletedEvent> taskDeletedConsumerService,
         IElasticClient elasticClient, 
         ILogger<TaskEventHandler> logger)
     {
         _taskAddedConsumerService = taskAddedConsumerService ?? throw new ArgumentNullException(nameof(taskAddedConsumerService));
         _taskStatusChangedConsumerService = taskStatusChangedConsumerService ?? throw new ArgumentNullException(nameof(taskStatusChangedConsumerService));
+        _taskUpdatedConsumerService = taskUpdatedConsumerService ?? throw new ArgumentNullException(nameof(taskUpdatedConsumerService));
+        _taskDeletedConsumerService = taskDeletedConsumerService ?? throw new ArgumentNullException(nameof(taskDeletedConsumerService));
         _elasticClient = elasticClient ?? throw new ArgumentNullException(nameof(elasticClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -108,6 +116,63 @@ public class TaskEventHandler : BackgroundService
                         }
 
                         return true;
+                    });
+
+            _taskUpdatedConsumerService.ConsumeMessage(
+                (m, _) =>
+                    {
+                        var documentExistsResponse = _elasticClient.Get<Model.Task>(m.TaskId);
+                        if (!documentExistsResponse.IsValid || !documentExistsResponse.Found)
+                        {
+                            var errorMessage = $"{m.Id} task could not be found";
+                            if (documentExistsResponse.OriginalException != null)
+                            {
+                                LogAndThrowException(new InvalidOperationException(errorMessage, documentExistsResponse.OriginalException));
+                            }
+
+                            LogAndThrowException(new InvalidOperationException(errorMessage));
+
+                            return false;
+                        }
+
+                        var task = documentExistsResponse.Source;
+                        task.Title = m.Title;
+                        var documentUpdateResponse = _elasticClient.Update<Model.Task>(m.TaskId, x => x.Doc(task));
+
+                        if (!documentUpdateResponse.IsValid || (documentUpdateResponse.Result != Result.Updated && documentUpdateResponse.Result != Result.Noop))
+                        {
+                            var errorMessage = $"{m.Id} task could not be updated";
+                            if (documentUpdateResponse.OriginalException != null)
+                            {
+                                LogAndThrowException(new InvalidOperationException(errorMessage, documentUpdateResponse.OriginalException));
+                            }
+
+                            LogAndThrowException(new InvalidOperationException(errorMessage));
+
+                            return false;
+                        }
+
+                        return true;
+                    });
+
+            _taskDeletedConsumerService.ConsumeMessage(
+                (m, _) =>
+                    {
+                        var documentDeleteResponse = _elasticClient.Delete<Model.Task>(m.TaskId);
+                        if (documentDeleteResponse.IsValid && documentDeleteResponse.Result != Result.Error)
+                        {
+                            return true;
+                        }
+
+                        var errorMessage = $"{m.Id} task could not be deleted";
+                        if (documentDeleteResponse.OriginalException != null)
+                        {
+                            LogAndThrowException(new InvalidOperationException(errorMessage, documentDeleteResponse.OriginalException));
+                        }
+
+                        LogAndThrowException(new InvalidOperationException(errorMessage));
+
+                        return false;
                     });
         }
 

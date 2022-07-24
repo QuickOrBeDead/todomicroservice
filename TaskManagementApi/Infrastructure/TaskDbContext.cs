@@ -23,7 +23,7 @@
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<TaskEntity>().HasKey(m => m.Id);
-            builder.Entity<TaskEntity>().Property(m => m.Title).IsFixedLength().HasMaxLength(300).IsRequired();
+            builder.Entity<TaskEntity>().Property(m => m.Title).HasMaxLength(300).IsRequired();
 
             base.OnModelCreating(builder);
         }
