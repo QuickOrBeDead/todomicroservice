@@ -10,11 +10,13 @@
     "generate-task-search-api": "openapi-generator-cli generate -i http://localhost:8082/swagger/v1/swagger.json -g typescript-axios -o src/metadata/task-search-api"
   },
   "dependencies": {
+    "@microsoft/signalr": "^6.0.7",
     "bootstrap": "^5.2.0",
     "core-js": "^3.8.3",
     "vue": "^3.2.13",
     "vue-class-component": "^8.0.0-0",
-    "vue-router": "^4.0.3"
+    "vue-router": "^4.0.3",
+    "vue-toastification": "^2.0.0-rc.5"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.5.1",

@@ -101,6 +101,8 @@ import { Options, Vue } from 'vue-class-component'
 import { createTaskManagementApi, createTaskSearchApi } from '@/api'
 import { TaskApi, TaskListItemViewModel } from '@/metadata/task-management-api'
 import { SearchApi } from '@/metadata/task-search-api'
+import * as signalR from "@microsoft/signalr"
+import { useToast } from "vue-toastification"
 
 @Options({})
 export default class HomeView extends Vue {
@@ -110,9 +112,19 @@ export default class HomeView extends Vue {
   searchText: string | null = null
   searchCompleted = ""
   task: TaskListItemViewModel = {}
+  toast = useToast()
 
   mounted(): void {
-      this.listTasks()
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("http://localhost:8081/generalNotificationHub")
+        .build()
+
+    connection.on("GeneralNotification", (message: string) => this.toast.success(message, {
+        timeout: 5_000
+      }))
+    connection.start()
+
+    this.listTasks()
   }
 
   listTasks(): void {
