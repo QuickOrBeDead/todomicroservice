@@ -1,5 +1,7 @@
 ﻿namespace SearchApi.Infrastructure;
 
+using System.Reflection;
+
 using MessageQueue;
 
 using Nest;
@@ -16,6 +18,8 @@ public class TaskEventHandler : BackgroundService
 
     private readonly IMessageQueueConsumerService<TaskDeletedEvent> _taskDeletedConsumerService;
 
+    private readonly IMessageQueuePublisherService _messageQueuePublisherService;
+
     private readonly IElasticClient _elasticClient;
 
     private readonly ILogger<TaskEventHandler> _logger;
@@ -25,6 +29,7 @@ public class TaskEventHandler : BackgroundService
         IMessageQueueConsumerService<TaskStatusChangedEvent> taskStatusChangedConsumerService,
         IMessageQueueConsumerService<TaskUpdatedEvent> taskUpdatedConsumerService,
         IMessageQueueConsumerService<TaskDeletedEvent> taskDeletedConsumerService,
+        IMessageQueuePublisherService messageQueuePublisherService,
         IElasticClient elasticClient, 
         ILogger<TaskEventHandler> logger)
     {
@@ -32,6 +37,7 @@ public class TaskEventHandler : BackgroundService
         _taskStatusChangedConsumerService = taskStatusChangedConsumerService ?? throw new ArgumentNullException(nameof(taskStatusChangedConsumerService));
         _taskUpdatedConsumerService = taskUpdatedConsumerService ?? throw new ArgumentNullException(nameof(taskUpdatedConsumerService));
         _taskDeletedConsumerService = taskDeletedConsumerService ?? throw new ArgumentNullException(nameof(taskDeletedConsumerService));
+        _messageQueuePublisherService = messageQueuePublisherService ?? throw new ArgumentNullException(nameof(messageQueuePublisherService));
         _elasticClient = elasticClient ?? throw new ArgumentNullException(nameof(elasticClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -62,11 +68,14 @@ public class TaskEventHandler : BackgroundService
                         catch (Exception e)
                         {
                             _logger.LogError(e, $"Index document error for task {m.Id}");
+                            _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "could not be added to ElasticSearch")));
                             throw;
                         }
 
                         if (!indexResponse.IsValid || indexResponse.Result != Result.Created)
                         {
+                            _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "could not be added to ElasticSearch")));
+
                             var errorMessage = $"{m.Id} task could not be indexed";
                             if (indexResponse.OriginalException != null)
                             {
@@ -78,6 +87,8 @@ public class TaskEventHandler : BackgroundService
 
                         _logger.LogInformation($"Index response for task {m.Id}: Result={indexResponse.Result}, Index={indexResponse.Index}");
 
+                        _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "is added to ElasticSearch")));
+
                         return true;
                     });
 
@@ -87,6 +98,8 @@ public class TaskEventHandler : BackgroundService
                         var documentExistsResponse = _elasticClient.Get<Model.Task>(m.TaskId);
                         if (!documentExistsResponse.IsValid || !documentExistsResponse.Found)
                         {
+                            _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "could not be found on ElasticSearch")));
+
                             var errorMessage = $"{m.Id} task could not be found";
                             if (documentExistsResponse.OriginalException != null)
                             {
@@ -104,6 +117,8 @@ public class TaskEventHandler : BackgroundService
 
                         if (!documentUpdateResponse.IsValid || (documentUpdateResponse.Result != Result.Updated && documentUpdateResponse.Result != Result.Noop))
                         {
+                            _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "could not be updated on ElasticSearch")));
+
                             var errorMessage = $"{m.Id} task could not be updated";
                             if (documentUpdateResponse.OriginalException != null)
                             {
@@ -115,6 +130,8 @@ public class TaskEventHandler : BackgroundService
                             return false;
                         }
 
+                        _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, $"Completed property is set to {m.Completed} on ElasticSearch")));
+
                         return true;
                     });
 
@@ -124,6 +141,8 @@ public class TaskEventHandler : BackgroundService
                         var documentExistsResponse = _elasticClient.Get<Model.Task>(m.TaskId);
                         if (!documentExistsResponse.IsValid || !documentExistsResponse.Found)
                         {
+                            _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "could not be found on ElasticSearch")));
+
                             var errorMessage = $"{m.Id} task could not be found";
                             if (documentExistsResponse.OriginalException != null)
                             {
@@ -141,6 +160,8 @@ public class TaskEventHandler : BackgroundService
 
                         if (!documentUpdateResponse.IsValid || (documentUpdateResponse.Result != Result.Updated && documentUpdateResponse.Result != Result.Noop))
                         {
+                            _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "could not be updated on ElasticSearch")));
+
                             var errorMessage = $"{m.Id} task could not be updated";
                             if (documentUpdateResponse.OriginalException != null)
                             {
@@ -152,6 +173,8 @@ public class TaskEventHandler : BackgroundService
                             return false;
                         }
 
+                        _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "is updated on ElasticSearch")));
+
                         return true;
                     });
 
@@ -161,8 +184,12 @@ public class TaskEventHandler : BackgroundService
                         var documentDeleteResponse = _elasticClient.Delete<Model.Task>(m.TaskId);
                         if (documentDeleteResponse.IsValid && documentDeleteResponse.Result != Result.Error)
                         {
+                            _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "is deleted on ElasticSearch")));
+
                             return true;
                         }
+
+                        _messageQueuePublisherService.PublishMessage(new GeneralNotificationEvent(GetGeneralNotificationMessage(m.TaskId, "could not be deleted on ElasticSearch")));
 
                         var errorMessage = $"{m.Id} task could not be deleted";
                         if (documentDeleteResponse.OriginalException != null)
@@ -177,6 +204,11 @@ public class TaskEventHandler : BackgroundService
         }
 
         return Task.CompletedTask;
+    }
+
+    private static string GetGeneralNotificationMessage(int taskId, string action)
+    {
+        return $"Task with id {taskId} {action} by {Assembly.GetExecutingAssembly().GetName().Name}";
     }
 
     private void LogAndThrowException(Exception ex)
