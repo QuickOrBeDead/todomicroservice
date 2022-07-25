@@ -3,15 +3,21 @@ using MessageQueue;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
+using TaskManagementApi.Events;
+using TaskManagementApi.HostedServices;
+using TaskManagementApi.Hubs;
 using TaskManagementApi.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddHostedService<GeneralNotificationHandler>();
 builder.Services.AddSingleton<IRabbitMqConnection>(_ => new DefaultRabbitMqConnection(builder.Configuration.GetSection("RabbitMqConnection").Get<RabbitMqConnectionSettings>()));
+builder.Services.AddSingleton<IMessageQueueConsumerService<GeneralNotificationEvent>>(x => new RabbitMqMessageQueueConsumerService<GeneralNotificationEvent>(x.GetRequiredService<IRabbitMqConnection>(), builder.Configuration.GetSection("RabbitMqConsumerGeneralNotification").Get<RabbitMqConsumerSettings>()));
 builder.Services.AddSingleton<IMessageQueuePublisherService, RabbitMqMessageQueuePublisherService>();
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -23,7 +29,10 @@ builder.Services.AddCors(options =>
         options.AddPolicy(name: "CorsOrigins",
             policy =>
                 {
-                    policy.WithOrigins("http://localhost:8080", "http://localhost:8084").AllowAnyMethod().AllowAnyHeader();
+                    policy.WithOrigins("http://localhost:8080", "http://localhost:8084")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
                 });
     });
 
@@ -57,7 +66,7 @@ app.UseCors("CorsOrigins");
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapHub<GeneralNotificationHub>("/generalNotificationHub");
 using (var serviceScope = app.Services
            .GetRequiredService<IServiceScopeFactory>()
            .CreateScope())
