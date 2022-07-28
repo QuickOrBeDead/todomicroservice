@@ -1,4 +1,4 @@
-﻿namespace SearchApi.Events;
+﻿namespace SearchWorkerService.Events;
 
 using MessageQueue.Events;
 

@@ -124,6 +124,15 @@ services:
       context: .
       dockerfile: TodoWebApp/Dockerfile
 
+  searchworkerservice:
+    image: ${DOCKER_REGISTRY-}searchworkerservice
+    restart: always
+    depends_on:
+      - rabbitmq
+    build:
+      context: .
+      dockerfile: SearchWorkerService/Dockerfile
+
 volumes:
   postgres:
     driver: local
@@ -135,4 +144,5 @@ volumes:
     driver: local
   mongodbconfig:
     driver: local
+
 
