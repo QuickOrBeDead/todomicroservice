@@ -15,6 +15,7 @@
   </ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\ElasticSearch\ElasticSearch.csproj" />
 		<ProjectReference Include="..\MessageQueue\MessageQueue.csproj" />
 	</ItemGroup>
 </Project>

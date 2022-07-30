@@ -24,7 +24,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Envoy", "Envoy", "{93BE5866
 		Envoy\envoy.yaml = Envoy\envoy.yaml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchWorkerService", "SearchWorkerService\SearchWorkerService.csproj", "{991AFB2F-FBE9-48AB-B1E2-2B0C500888E2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SearchWorkerService", "SearchWorkerService\SearchWorkerService.csproj", "{991AFB2F-FBE9-48AB-B1E2-2B0C500888E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElasticSearch", "ElasticSearch\ElasticSearch.csproj", "{A6511342-C735-4264-B28A-68F0C20E7CC6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,6 +62,10 @@ Global
 		{991AFB2F-FBE9-48AB-B1E2-2B0C500888E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{991AFB2F-FBE9-48AB-B1E2-2B0C500888E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{991AFB2F-FBE9-48AB-B1E2-2B0C500888E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6511342-C735-4264-B28A-68F0C20E7CC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6511342-C735-4264-B28A-68F0C20E7CC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6511342-C735-4264-B28A-68F0C20E7CC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6511342-C735-4264-B28A-68F0C20E7CC6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -67,6 +73,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{28607C7D-4B96-4C11-8018-24383BA1D7F3} = {C0996D49-F3A8-4B25-AC6F-1DF6672CC94E}
 		{C9527EB1-CAC6-4B98-B8EE-6C239F271CFA} = {245BB7AC-FFBB-4F9F-9859-D4467C2A6202}
+		{A6511342-C735-4264-B28A-68F0C20E7CC6} = {245BB7AC-FFBB-4F9F-9859-D4467C2A6202}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AE4F6594-8F01-4F94-B0B5-792B572C5D87}

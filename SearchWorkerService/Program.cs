@@ -1,3 +1,5 @@
+using ElasticSearch;
+
 using MessageQueue;
 
 using Nest;
@@ -10,6 +12,7 @@ var host = Host.CreateDefaultBuilder(args)
     {
         services.AddHostedService<Worker>();
         services.AddSingleton<IElasticClient>(_ => new ElasticClient(new ConnectionSettings(new Uri("http://elasticsearch:9200")).BasicAuthentication("elastic", "Password1").DefaultIndex("task").DefaultMappingFor<SearchWorkerService.Infrastructure.Model.Task>(x => x.IdProperty(y => y.Id).IndexName("task"))));
+        services.AddSingleton<IElasticSearchRepository, ElasticSearchRepository>();
         services.AddSingleton<IRabbitMqConnection>(_ => new DefaultRabbitMqConnection(builder.Configuration.GetSection("RabbitMqConnection").Get<RabbitMqConnectionSettings>()));
         services.AddSingleton<IMessageQueueConsumerService<TaskAddedEvent>>(x => new RabbitMqMessageQueueConsumerService<TaskAddedEvent>(x.GetRequiredService<IRabbitMqConnection>(), builder.Configuration.GetSection("RabbitMqConsumerTaskAdded").Get<RabbitMqConsumerSettings>()));
         services.AddSingleton<IMessageQueueConsumerService<TaskStatusChangedEvent>>(x => new RabbitMqMessageQueueConsumerService<TaskStatusChangedEvent>(x.GetRequiredService<IRabbitMqConnection>(), builder.Configuration.GetSection("RabbitMqConsumerTaskStatusChanged").Get<RabbitMqConsumerSettings>()));
