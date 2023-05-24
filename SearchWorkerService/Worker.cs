@@ -56,7 +56,7 @@ public class Worker : BackgroundService
         }
 
         _elasticClient.Indices.Create(
-            $"task-{DateTime.UtcNow:dd-MM-yyyy-HH-mm-ss}",
+            $"task-{DateTime.UtcNow:yyyy-MM-dd}",
             x => x.Map<Infrastructure.Model.Task>(m => m.AutoMap()));
 
         _taskAddedConsumerService.ConsumeMessage(
